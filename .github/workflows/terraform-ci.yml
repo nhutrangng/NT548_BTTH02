@@ -2,10 +2,10 @@ name: "Terraform CI/CD with Checkov"
 on:
     push:
         branches:
-            -main
+            - main
         paths:
-            - 'Terraform/**'
-            - '.github/workflows/terraform-ci.yml'
+            - "Terraform/**"
+            - ".github/workflows/terraform-ci.yml"
 jobs:
     terraform-deploy:
         name: "Deploy AWS Infrastructure"
@@ -45,5 +45,5 @@ jobs:
 
             - name: Terraform Apply
               working-directory: ./Terraform
-              run: terraform apply auto-approve
+              run: terraform apply -auto-approve
             
