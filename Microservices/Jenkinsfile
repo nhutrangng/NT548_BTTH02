@@ -50,8 +50,9 @@ pipeline {
         stage('Stage 5: Deploy to Kubernetes') {
             steps {
                 dir('Microservices') {
-                    sh "minikube kubectl -- apply -f k8s/deployment.yaml --validate=false"
-                    sh "minikube kubectl -- apply -f k8s/service.yaml --validate=false"
+                    // Dùng kubectl chính chủ đã cài trong Jenkins
+                    sh "kubectl apply -f k8s/deployment.yaml --validate=false --insecure-skip-tls-verify=true"
+                    sh "kubectl apply -f k8s/service.yaml --validate=false --insecure-skip-tls-verify=true"
                 }
             }
         }
