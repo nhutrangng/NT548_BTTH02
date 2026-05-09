@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hermosa-menu-deploy
+  labels:
+    app: hermosa-menu
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hermosa-menu
+  template:
+    metadata:
+      labels:
+        app: hermosa-menu
+    spec:
+      containers:
+      - name: menu-container
+        image: ntrangng/hermosa-menu:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
