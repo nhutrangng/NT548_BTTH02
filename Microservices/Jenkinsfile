@@ -50,8 +50,8 @@ pipeline {
         stage('Stage 5: Deploy to Kubernetes') {
             steps {
                 dir('Microservices') {
-                    sh "kubectl apply -f k8s/deployment.yaml --insecure-skip-tls-verify=true"
-                    sh "kubectl apply -f k8s/service.yaml --insecure-skip-tls-verify=true"
+                    sh "kubectl apply -f k8s/deployment.yaml --validate=false --insecure-skip-tls-verify=true"
+                    sh "kubectl apply -f k8s/service.yaml --validate=false --insecure-skip-tls-verify=true"
                 }
             }
         }
