@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs 'node18'
-    }
-
     environment {
         DOCKER_IMAGE = 'ntrangng/hermosa-menu-service'
         DOCKER_HUB_CREDS = 'docker-hub-creds'
