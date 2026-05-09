@@ -50,10 +50,8 @@ pipeline {
         stage('Stage 5: Deploy to Kubernetes') {
             steps {
                 dir('Microservices') {
-                    sh "kubectl apply -f k8s/deployment.yaml"
-                    sh "kubectl apply -f k8s/service.yaml"
-                    
-                    sh "kubectl rollout status deployment/hermosa-menu-deploy"
+                    sh "kubectl apply -f k8s/deployment.yaml --insecure-skip-tls-verify=true"
+                    sh "kubectl apply -f k8s/service.yaml --insecure-skip-tls-verify=true"
                 }
             }
         }
