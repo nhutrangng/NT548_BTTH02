@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = 'docker-hub-trang' 
-        SONAR_PROJECT_KEY = 'hermosa-menu-service'
-        IMAGE_NAME = 'ntrangng/hermosa-menu-service'
+        DOCKER_IMAGE = 'ntrangng/hermosa-menu-service'
+        DOCKER_HUB_CREDS = 'docker-hub-creds'
+        SONAR_TOKEN_ID = 'sonar-token'
     }
 
     stages {
@@ -27,22 +27,22 @@ pipeline {
             }
         }
 
-
         stage('Stage 3: Build & Security Scan (Trivy)') {
             steps {
                 dir('Microservices') {
-                    sh "docker build -t ${env.IMAGE_NAME}:latest -t ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ."
-                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL ${env.IMAGE_NAME}:latest"
+                    sh "docker build -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:${env.BUILD_ID} ."
+                   
+                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:latest"
                 }
             }
         }
 
         stage('Stage 4: Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${env.DOCKER_HUB_CREDENTIALS}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                    sh "echo ${PASS} | docker login -u ${USER} --password-stdin"
-                    sh "docker push ${env.IMAGE_NAME}:latest"
-                    sh "docker push ${env.IMAGE_NAME}:${env.BUILD_NUMBER}"
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDS}", passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                    sh "echo \$DOCKER_HUB_PASSWORD | docker login -u \$DOCKER_HUB_USERNAME --password-stdin"
+                    sh "docker push ${DOCKER_IMAGE}:latest"
+                    sh "docker push ${DOCKER_IMAGE}:${env.BUILD_ID}"
                 }
             }
         }
@@ -50,6 +50,7 @@ pipeline {
         stage('Stage 5: Deploy to Kubernetes') {
             steps {
                 dir('Microservices') {
+                    // Dùng kubectl chính chủ đã cài trong Jenkins
                     sh "kubectl apply -f k8s/deployment.yaml --validate=false --insecure-skip-tls-verify=true"
                     sh "kubectl apply -f k8s/service.yaml --validate=false --insecure-skip-tls-verify=true"
                 }
@@ -59,7 +60,7 @@ pipeline {
 
     post {
         always {
-            echo "Pipeline hoan tat. Kiem tra ket qua tren Dashboard!"
+            echo "Pipeline hoàn tất. Kiểm tra kết quả trên Dashboard!"
         }
     }
 }
