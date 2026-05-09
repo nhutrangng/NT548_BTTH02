@@ -15,7 +15,7 @@ spec:
         app: hermosa-menu
     spec:
       containers:
-      - name: menu-container
+      - name: hermosa-menu-container
         image: ntrangng/hermosa-menu:latest
         imagePullPolicy: Always
         ports:
