@@ -5,6 +5,11 @@ pipeline {
         DOCKER_IMAGE = 'ntrangng/hermosa-menu-service'
         DOCKER_HUB_CREDS = 'docker-hub-creds'
         SONAR_TOKEN_ID = 'sonar-token'
+        K8S_CREDS_ID = 'k8s-kubeconfig-creds' 
+    }
+
+    tools {
+        nodejs 'NodeJS' 
     }
 
     stages {
@@ -31,7 +36,7 @@ pipeline {
             steps {
                 dir('Microservices') {
                     sh "docker build -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:${env.BUILD_ID} ."
-                   
+                    
                     sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:latest"
                 }
             }
@@ -50,9 +55,10 @@ pipeline {
         stage('Stage 5: Deploy to Kubernetes') {
             steps {
                 dir('Microservices') {
-                    // Dùng kubectl chính chủ đã cài trong Jenkins
-                    sh "kubectl apply -f k8s/deployment.yaml --validate=false --insecure-skip-tls-verify=true"
-                    sh "kubectl apply -f k8s/service.yaml --validate=false --insecure-skip-tls-verify=true"
+                    withKubeConfig(credentialsId: "${K8S_CREDS_ID}") {
+                        sh "kubectl apply -f k8s/deployment.yaml --validate=false --insecure-skip-tls-verify=true"
+                        sh "kubectl apply -f k8s/service.yaml --validate=false --insecure-skip-tls-verify=true"
+                    }
                 }
             }
         }
