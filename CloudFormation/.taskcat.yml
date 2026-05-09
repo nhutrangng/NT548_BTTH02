@@ -1,0 +1,7 @@
+project:
+  name: lab2-infra
+  regions:
+    - ap-southeast-1
+tests:
+  default:
+    template: templates/infrastructure.yaml

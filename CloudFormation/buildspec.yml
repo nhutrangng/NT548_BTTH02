@@ -1,0 +1,16 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - echo "Upgrading pip..."
+      - pip install --upgrade pip
+      - echo "Installing cfn-lint only for faster build..."
+      - pip install cfn-lint
+  build:
+    commands:
+      - echo "Starting static scan with cfn-lint..."
+      - cfn-lint templates/infrastructure.yaml --non-zero-exit-code error
+      - echo "Skipping taskcat for stability..." 
