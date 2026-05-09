@@ -50,8 +50,11 @@ pipeline {
         stage('Stage 5: Deploy to Kubernetes') {
             steps {
                 dir('Microservices') {
-                    sh "kubectl apply -f k8s/deployment.yaml --insecure-skip-tls-verify=true --validate=false"
-                    sh "kubectl apply -f k8s/service.yaml --insecure-skip-tls-verify=true --validate=false"
+                    script {
+                        def gw = sh(script: "ip route | grep default | awk '{print \$3}'", returnStdout: true).trim()
+                        sh "kubectl apply -f k8s/deployment.yaml --server=https://${gw}:8443 --insecure-skip-tls-verify=true --validate=false"
+                        sh "kubectl apply -f k8s/service.yaml --server=https://${gw}:8443 --insecure-skip-tls-verify=true --validate=false"
+                    }
                 }
             }
         }
