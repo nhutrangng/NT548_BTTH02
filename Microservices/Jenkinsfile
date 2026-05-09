@@ -2,20 +2,15 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'ntrangng/hermosa-menu-service'
-        DOCKER_HUB_CREDS = 'docker-hub-creds'
-        SONAR_TOKEN_ID = 'sonar-token'
-        K8S_CREDS_ID = 'k8s-kubeconfig-creds' 
-    }
-
-    tools {
-        nodejs 'NodeJS' 
+        DOCKER_HUB_CREDENTIALS = 'docker-hub-trang' 
+        SONAR_PROJECT_KEY = 'hermosa-menu-service'
+        IMAGE_NAME = 'ntrangng/hermosa-menu-service'
     }
 
     stages {
         stage('Stage 1: Checkout Code') {
             steps {
-                checkout scm
+                checkout scm [cite: 3]
             }
         }
 
@@ -25,7 +20,15 @@ pipeline {
                     script {
                         def scannerHome = tool 'sonar-scanner'
                         withSonarQubeEnv('SonarQube') {
-                            sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=hermosa-menu-service -Dsonar.sources=src/"
+                            sh """
+                            docker run --rm \
+                                -e SONAR_HOST_URL=\$SONAR_HOST_URL \
+                                -e SONAR_TOKEN=\$SONAR_AUTH_TOKEN \
+                                -v \$(pwd):/usr/src \
+                                sonarsource/sonar-scanner-cli \
+                                -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                                -Dsonar.sources=src/
+                            """
                         }
                     }
                 }
@@ -35,19 +38,18 @@ pipeline {
         stage('Stage 3: Build & Security Scan (Trivy)') {
             steps {
                 dir('Microservices') {
-                    sh "docker build -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:${env.BUILD_ID} ."
-                    
-                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:latest"
+                    sh "docker build -t ${IMAGE_NAME}:latest -t ${IMAGE_NAME}:${BUILD_NUMBER} ." [cite: 39]
+                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL ${IMAGE_NAME}:latest" [cite: 40]
                 }
             }
         }
 
         stage('Stage 4: Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDS}", passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
-                    sh "echo \$DOCKER_HUB_PASSWORD | docker login -u \$DOCKER_HUB_USERNAME --password-stdin"
-                    sh "docker push ${DOCKER_IMAGE}:latest"
-                    sh "docker push ${DOCKER_IMAGE}:${env.BUILD_ID}"
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDENTIALS}", passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                    sh "echo \$DOCKER_HUB_PASSWORD | docker login -u \$DOCKER_HUB_USERNAME --password-stdin" [cite: 331]
+                    sh "docker push ${IMAGE_NAME}:latest" [cite: 333]
+                    sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}" [cite: 334]
                 }
             }
         }
@@ -55,8 +57,8 @@ pipeline {
         stage('Stage 5: Deploy to Kubernetes') {
             steps {
                 dir('Microservices') {
-                    withKubeConfig(credentialsId: "${K8S_CREDS_ID}") {
-                        sh "kubectl apply -f k8s/deployment.yaml --validate=false --insecure-skip-tls-verify=true"
+                    script {
+                        sh "kubectl apply -f k8s/deployment.yaml --validate=false --insecure-skip-tls-verify=true" [cite: 336]
                         sh "kubectl apply -f k8s/service.yaml --validate=false --insecure-skip-tls-verify=true"
                     }
                 }
@@ -66,7 +68,7 @@ pipeline {
 
     post {
         always {
-            echo "Pipeline hoàn tất. Kiểm tra kết quả trên Dashboard!"
+            echo "Pipeline hoàn tất. Kiểm tra kết quả trên Dashboard!" [cite: 339]
         }
     }
 }
